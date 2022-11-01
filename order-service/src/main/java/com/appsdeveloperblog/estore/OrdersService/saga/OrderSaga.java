@@ -1,0 +1,30 @@
+package com.appsdeveloperblog.estore.OrdersService.saga;
+
+import com.appsdeveloperblog.estore.OrdersService.core.events.OrderCreatedEvent;
+import com.sop.chapter9.core.ReserveProductCommand;
+import org.axonframework.commandhandling.gateway.CommandGateway;
+import org.axonframework.modelling.saga.SagaEventHandler;
+import org.axonframework.modelling.saga.StartSaga;
+import org.springframework.beans.factory.annotation.Autowired;
+
+public class OrderSaga {
+
+    @Autowired
+    private transient CommandGateway commandGateway;
+
+    @StartSaga
+    @SagaEventHandler(associationProperty = "orderId")
+    public void handle(OrderCreatedEvent orderCreatedEvent){
+        ReserveProductCommand reserveProductCommand = ReserveProductCommand.builder()
+                .orderId(orderCreatedEvent.getOrderId())
+                .productId(orderCreatedEvent.getProductId())
+                .quantity(orderCreatedEvent.getQuantity())
+                .userId(orderCreatedEvent.getUserId())
+                .build();
+        commandGateway.send(reserveProductCommand, (commandGateway, commandResultMessage) -> {
+            if (commandResultMessage.isExceptional()){
+                // Start compensating transaction
+            }
+        });
+    }
+}
